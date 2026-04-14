@@ -11,6 +11,7 @@ const SAFE_ROWS = new Set([0, 1, ROWS - 1]);
 const SNIPER_LOCK_DISTANCE = 10;
 const SNIPER_FOLLOW_SPEED = 0.018;
 const SNIPER_AIM_SECONDS = 1;
+const BUILD_TAG = 'sniper-update-v2';
 
 let best = Number(localStorage.getItem('crossyBest') || 0);
 bestEl.textContent = best;
@@ -40,8 +41,8 @@ function resetGame() {
   score = 0;
   gameOver = false;
   sniper = {
-    x: 50,
-    y: 50,
+    x: canvas.width / 2,
+    y: 80,
     aimTime: 0,
     firing: false,
     shotTimer: 0,
@@ -208,16 +209,21 @@ function drawPlayer() {
 function drawSniper() {
   const pulse = 1 + Math.sin(Date.now() / 120) * 0.15;
   ctx.save();
-  ctx.strokeStyle = sniper.aimTime > 0 ? '#ef4444' : '#ffffff';
-  ctx.lineWidth = 2;
+  ctx.strokeStyle = sniper.aimTime > 0 ? '#ff1f1f' : '#ff4d4f';
+  ctx.lineWidth = 4;
+  ctx.shadowColor = 'rgba(255, 0, 0, 0.55)';
+  ctx.shadowBlur = 14;
   ctx.beginPath();
-  ctx.arc(sniper.x, sniper.y, 16 * pulse, 0, Math.PI * 2);
+  ctx.arc(sniper.x, sniper.y, 18 * pulse, 0, Math.PI * 2);
   ctx.stroke();
   ctx.beginPath();
-  ctx.moveTo(sniper.x - 22, sniper.y);
-  ctx.lineTo(sniper.x + 22, sniper.y);
-  ctx.moveTo(sniper.x, sniper.y - 22);
-  ctx.lineTo(sniper.x, sniper.y + 22);
+  ctx.arc(sniper.x, sniper.y, 7 * pulse, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(sniper.x - 26, sniper.y);
+  ctx.lineTo(sniper.x + 26, sniper.y);
+  ctx.moveTo(sniper.x, sniper.y - 26);
+  ctx.lineTo(sniper.x, sniper.y + 26);
   ctx.stroke();
   ctx.restore();
 
@@ -249,5 +255,6 @@ function loop(timestamp = 0) {
   requestAnimationFrame(loop);
 }
 
+statusEl.textContent = `小心来车，也别让狙击手锁定你。当前版本: ${BUILD_TAG}`;
 resetGame();
 loop();
