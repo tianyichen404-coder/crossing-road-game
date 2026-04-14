@@ -239,12 +239,24 @@ function drawSniper() {
   }
 }
 
+function drawVersionTag() {
+  ctx.save();
+  ctx.fillStyle = 'rgba(17, 24, 39, 0.72)';
+  ctx.fillRect(canvas.width - 150, canvas.height - 34, 138, 22);
+  ctx.fillStyle = '#ffffff';
+  ctx.font = '14px Arial';
+  ctx.textAlign = 'right';
+  ctx.fillText(`ver: ${BUILD_TAG}`, canvas.width - 18, canvas.height - 18);
+  ctx.restore();
+}
+
 function render() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   for (let row = 0; row < ROWS; row++) drawRow(row);
   drawCars();
   drawPlayer();
   drawSniper();
+  drawVersionTag();
 }
 
 function loop(timestamp = 0) {
