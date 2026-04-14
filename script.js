@@ -1,0 +1,168 @@
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const scoreEl = document.getElementById('score');
+const bestEl = document.getElementById('best');
+const statusEl = document.getElementById('status');
+
+const COLS = 12;
+const ROWS = 16;
+const TILE = 40;
+const SAFE_ROWS = new Set([0, 1, ROWS - 1]);
+
+let best = Number(localStorage.getItem('crossyBest') || 0);
+bestEl.textContent = best;
+
+const laneTypes = Array.from({ length: ROWS }, (_, row) => {
+  if (SAFE_ROWS.has(row)) return 'safe';
+  return row % 2 === 0 ? 'road' : 'grass';
+});
+
+let player;
+let cars;
+let score;
+let gameOver;
+
+function resetGame() {
+  player = { col: Math.floor(COLS / 2), row: ROWS - 1 };
+  cars = [];
+  score = 0;
+  gameOver = false;
+  statusEl.textContent = '小心来车，尽量往上走。';
+  buildCars();
+  updateHud();
+}
+
+function buildCars() {
+  cars = [];
+  for (let row = 0; row < ROWS; row++) {
+    if (laneTypes[row] !== 'road') continue;
+    const dir = row % 4 === 0 ? 1 : -1;
+    const speed = 1.2 + (ROWS - row) * 0.03;
+    for (let i = 0; i < 3; i++) {
+      cars.push({
+        row,
+        x: (i * 180 + row * 37) % (canvas.width + 120) - 60,
+        width: 54,
+        height: 26,
+        dir,
+        speed,
+        color: dir > 0 ? '#ef4444' : '#3b82f6'
+      });
+    }
+  }
+}
+
+function updateHud() {
+  scoreEl.textContent = score;
+  bestEl.textContent = best;
+}
+
+function movePlayer(dx, dy) {
+  if (gameOver) return;
+  const nextCol = Math.max(0, Math.min(COLS - 1, player.col + dx));
+  const nextRow = Math.max(0, Math.min(ROWS - 1, player.row + dy));
+  if (nextCol === player.col && nextRow === player.row) return;
+  player.col = nextCol;
+  if (nextRow < player.row) {
+    score += 1;
+    if (score > best) {
+      best = score;
+      localStorage.setItem('crossyBest', String(best));
+    }
+  }
+  player.row = nextRow;
+  updateHud();
+}
+
+window.addEventListener('keydown', (event) => {
+  const key = event.key.toLowerCase();
+  if (key === 'arrowup' || key === 'w') movePlayer(0, -1);
+  else if (key === 'arrowdown' || key === 's') movePlayer(0, 1);
+  else if (key === 'arrowleft' || key === 'a') movePlayer(-1, 0);
+  else if (key === 'arrowright' || key === 'd') movePlayer(1, 0);
+  else if (key === 'r') resetGame();
+});
+
+function update() {
+  if (!gameOver) {
+    for (const car of cars) {
+      car.x += car.speed * car.dir;
+      if (car.dir > 0 && car.x > canvas.width + 70) car.x = -80;
+      if (car.dir < 0 && car.x < -80) car.x = canvas.width + 70;
+
+      if (car.row === player.row) {
+        const px = player.col * TILE + TILE / 2;
+        const py = player.row * TILE + TILE / 2;
+        if (
+          px > car.x - car.width / 2 &&
+          px < car.x + car.width / 2 &&
+          py > car.row * TILE + 6 &&
+          py < car.row * TILE + TILE - 6
+        ) {
+          gameOver = true;
+          statusEl.textContent = '撞到了，按 R 重新开始。';
+        }
+      }
+    }
+
+    if (player.row === 0) {
+      gameOver = true;
+      statusEl.textContent = '成功过马路了，按 R 再来一局。';
+    }
+  }
+}
+
+function drawRow(row) {
+  const y = row * TILE;
+  if (laneTypes[row] === 'road') {
+    ctx.fillStyle = '#4b5563';
+    ctx.fillRect(0, y, canvas.width, TILE);
+    ctx.strokeStyle = '#fbbf24';
+    ctx.setLineDash([14, 14]);
+    ctx.beginPath();
+    ctx.moveTo(0, y + TILE / 2);
+    ctx.lineTo(canvas.width, y + TILE / 2);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  } else {
+    ctx.fillStyle = row === 0 ? '#86efac' : '#65a30d';
+    ctx.fillRect(0, y, canvas.width, TILE);
+  }
+}
+
+function drawCars() {
+  for (const car of cars) {
+    const y = car.row * TILE + 7;
+    ctx.fillStyle = car.color;
+    ctx.fillRect(car.x - car.width / 2, y, car.width, car.height);
+    ctx.fillStyle = '#111827';
+    ctx.fillRect(car.x - 18, y + 5, 10, 8);
+    ctx.fillRect(car.x + 8, y + 5, 10, 8);
+  }
+}
+
+function drawPlayer() {
+  const x = player.col * TILE + 6;
+  const y = player.row * TILE + 6;
+  ctx.fillStyle = '#fde047';
+  ctx.fillRect(x, y, TILE - 12, TILE - 12);
+  ctx.fillStyle = '#111827';
+  ctx.fillRect(x + 8, y + 8, 5, 5);
+  ctx.fillRect(x + 21, y + 8, 5, 5);
+}
+
+function render() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  for (let row = 0; row < ROWS; row++) drawRow(row);
+  drawCars();
+  drawPlayer();
+}
+
+function loop() {
+  update();
+  render();
+  requestAnimationFrame(loop);
+}
+
+resetGame();
+loop();
