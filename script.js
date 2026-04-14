@@ -11,7 +11,7 @@ const SAFE_ROWS = new Set([0, 1, ROWS - 1]);
 const SNIPER_LOCK_DISTANCE = 10;
 const SNIPER_FOLLOW_SPEED = 0.018;
 const SNIPER_AIM_SECONDS = 1;
-const BUILD_TAG = 'sniper-update-v2';
+const BUILD_TAG = '0.1.3';
 
 let best = Number(localStorage.getItem('crossyBest') || 0);
 bestEl.textContent = best;
@@ -246,7 +246,7 @@ function drawVersionTag() {
   ctx.fillStyle = '#ffffff';
   ctx.font = '14px Arial';
   ctx.textAlign = 'right';
-  ctx.fillText(`ver: ${BUILD_TAG}`, canvas.width - 18, canvas.height - 18);
+  ctx.fillText(`v${BUILD_TAG}`, canvas.width - 18, canvas.height - 18);
   ctx.restore();
 }
 
